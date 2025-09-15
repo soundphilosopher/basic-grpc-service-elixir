@@ -1,0 +1,8 @@
+version: v2
+plugins:
+  # Use protoc directly as a local plugin
+  - local: protoc-gen-elixir
+    out: lib/sdk
+    opt:
+      - plugins=grpc
+      - gen_descriptors=true
