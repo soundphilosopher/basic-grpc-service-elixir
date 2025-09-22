@@ -1,7 +1,7 @@
 defmodule BasicGrpcService.Server do
   @moduledoc "Basic gRPC server"
 
-  use GRPC.Server, service: Basic.V1.BasicService.Service, http_transcode: true
+  use GRPC.Server, service: Basic.V1.BasicService.Service
 
   alias Eliza
   alias GRPC.Stream
@@ -31,9 +31,9 @@ defmodule BasicGrpcService.Server do
       cloud_event = %CloudEvent{
         id: :crypto.strong_rand_bytes(16) |> Base.encode16(case: :lower),
         spec_version: "1.0",
-        source: "",
-        type: "",
-        data: event_data
+        source: "/Hello",
+        type: "basic.service.v1.HelloResponseEvent",
+        data: {:binary_data, event_data}
       }
 
       %HelloResponse{
@@ -45,7 +45,7 @@ defmodule BasicGrpcService.Server do
 
   @spec talk(Enumerable.t(), GRPC.Server.Stream.t()) :: any()
   def talk(request, stream) do
-    Stream.from(request, max_demand: 10)
+    Stream.from(request)
     |> Stream.map(fn %TalkRequest{message: message} ->
       {answer, _} = Eliza.talk(message)
       %TalkResponse{answer: answer}

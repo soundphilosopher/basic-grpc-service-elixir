@@ -16,23 +16,38 @@ defmodule BasicGrpcService.Application do
       GrpcReflection
     ]
 
-    Logger.info("🚀 Starting BasicGrpcService")
-    Logger.info("📡 HTTPS/HTTP2 server on port 9443 with TLS")
+    Logger.info("🚀 Starting BasicGrpcService on port 9443 with TLS")
 
     opts = [strategy: :one_for_one, name: BasicGrpcService.Supervisor]
     Supervisor.start_link(children, opts)
   end
 
   defp start_args do
-    cred = GRPC.Credential.new(ssl: [certfile: @cert_path, keyfile: @key_path])
+    # Check certificates exist
+    case {File.exists?(@cert_path), File.exists?(@key_path)} do
+      {true, true} ->
+        Logger.info("✅ Found certificates, enabling TLS")
+        Logger.info("   Cert: #{@cert_path}")
+        Logger.info("   Key: #{@key_path}")
 
-    opts = [
-      endpoint: BasicGrpcService.Endpoint,
-      port: 9443,
-      start_server: true,
-      adapter_opts: [cred: cred]
-    ]
+        [
+          endpoint: BasicGrpcService.Endpoint,
+          port: 9443,
+          start_server: true,
+          adapter_opts: [
+            cred: GRPC.Credential.new(ssl: [certfile: @cert_path, keyfile: @key_path])
+          ]
+        ]
 
-    opts
+      {cert_exists, key_exists} ->
+        Logger.warning("⚠️  Missing certificates (cert: #{cert_exists}, key: #{key_exists})")
+        Logger.warning("   Starting without TLS")
+
+        [
+          endpoint: BasicGrpcService.Endpoint,
+          port: 9443,
+          start_server: true
+        ]
+    end
   end
 end

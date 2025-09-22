@@ -6,6 +6,7 @@ defmodule BasicGrpcService.Endpoint do
   intercept(GRPC.Server.Interceptors.Logger)
 
   run(BasicGrpcService.Server)
-  run(BasicGrpcService.Reflection.Alpha.Server)
-  run(BasicGrpcService.Reflection.Server)
+  run(Health.Server)
+  run(Reflection.V1.Server)
+  run(Reflection.V1alpha.Server)
 end
