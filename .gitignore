@@ -26,3 +26,4 @@ basic_grpc_service-*.tar
 /tmp/
 
 # local certificates
+/priv/certs/local.*
