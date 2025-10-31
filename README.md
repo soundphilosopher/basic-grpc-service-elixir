@@ -1,5 +1,7 @@
 # 🚀 Basic gRPC Service in Elixir
 
+<div align="center">
+
 ![Elixir](https://img.shields.io/badge/Elixir-4B275F?style=for-the-badge&logo=elixir&logoColor=white)
 ![gRPC](https://img.shields.io/badge/gRPC-00ADD8?style=for-the-badge&logo=grpc&logoColor=white)
 ![Protocol Buffers](https://img.shields.io/badge/Protobuf-336791?style=for-the-badge&logo=protocol-buffers&logoColor=white)
@@ -10,8 +12,7 @@
 [![gRPC Health](https://img.shields.io/badge/health-check-green?style=flat-square)](https://github.com/grpc/grpc/blob/master/doc/health-checking.md)
 [![Server Reflection](https://img.shields.io/badge/reflection-enabled-blue?style=flat-square)](https://github.com/grpc/grpc/blob/master/doc/server-reflection.md)
 [![TLS](https://img.shields.io/badge/TLS-enabled-brightgreen?style=flat-square&logo=letsencrypt)](https://github.com/FiloSottile/mkcert)
-
-<div align="center">
+[![Buf](https://img.shields.io/badge/Buf-CLI-blueviolet?style=flat-square)](https://buf.build)
 
 *A delightful demonstration of gRPC services in Elixir, featuring ELIZA, the classic psychotherapist chatbot from the 1960s! 🤖*
 
@@ -28,6 +29,7 @@ Ever wanted to build a gRPC service in Elixir? Ever wanted to chat with ELIZA? E
 - **⚡ Background Processing**: Fan-out/fan-in pattern demonstration with concurrent task execution
 - **🎯 Google.Protobuf.Any Support**: Dynamic message handling with proper type URLs
 - **🔒 HTTPS/TLS Support**: Secure communication with locally trusted certificates
+- **🛠️ Buf CLI Integration**: Modern protobuf workflow with linting and breaking change detection
 
 ## 🎮 Quick Start
 
@@ -94,6 +96,78 @@ mix run --no-halt
 ```
 
 Your secure gRPC server is now running on `https://127.0.0.1:9443`! 🎉
+
+## 🛠️ Development
+
+### Protocol Buffer Management with Buf
+
+This project uses [Buf CLI](https://buf.build) for modern protobuf workflow management. Buf provides:
+
+- **Linting**: Ensures your `.proto` files follow best practices
+- **Breaking Change Detection**: Catches backwards-incompatible changes
+- **Code Generation**: Streamlined generation of Elixir code from protos
+
+#### Buf Configuration
+
+The project includes two Buf configuration files:
+
+**`buf.yaml`** - Defines the protobuf module and lint/breaking rules:
+```yaml
+version: v2
+modules:
+  - path: ./priv/proto
+    lint:
+      use:
+        - STANDARD
+    breaking:
+      use:
+        - FILE
+        - WIRE_JSON
+```
+
+**`buf.gen.yaml`** - Configures code generation:
+```yaml
+version: v2
+plugins:
+  - local: protoc-gen-elixir
+    out: lib/sdk
+    opt:
+      - plugins=grpc
+      - gen_descriptors=true
+```
+
+#### Working with Protobuf Files
+
+```bash
+# Lint your proto files
+buf lint
+
+# Check for breaking changes (requires git history)
+buf breaking --against '.git#branch=main'
+
+# Generate Elixir code from proto files
+buf generate
+
+# Format proto files
+buf format -w
+
+# View your API documentation
+buf build
+```
+
+#### Adding New Proto Files
+
+1. Add your `.proto` file to `priv/proto/`
+2. Run linting to ensure it follows standards:
+   ```bash
+   buf lint
+   ```
+3. Generate the Elixir code:
+   ```bash
+   buf generate
+   ```
+4. The generated code will appear in `lib/sdk/`
+5. Implement your service in `lib/` using the generated modules
 
 ## 🛠️ Features & Services
 
@@ -284,14 +358,16 @@ The service properly handles `Any` types with:
 - Binary encoding of nested messages
 - Base64 representation in JSON
 
-## 📝 Configuration
+📝 Configuration
 
 The service configuration can be modified in:
 
 - `config/config.exs` - General configuration including TLS settings
 - `lib/endpoint.ex` - gRPC endpoint setup
+- `buf.yaml` - Protobuf linting and breaking change rules
+- `buf.gen.yaml` - Code generation settings
 - Port configuration: Default is `50051` (HTTPS)
-- TLS certificates: `priv/certs/local.crt` and `priv/certs/local.key`
+- TLS certificates: `priv/certs/local.crt` and `priv/certs/local.key
 
 ### TLS/SSL Configuration
 
@@ -302,9 +378,16 @@ The server expects TLS certificates at:
 
 You can modify the certificate paths in your configuration if needed.
 
-## 🤝 Contributing
+🤝 Contributing
 
 Feel free to open issues and pull requests! Whether it's adding new ELIZA responses, improving the gRPC implementation, or adding new features, all contributions are welcome.
+
+When modifying proto files:
+1. Make your changes in `priv/proto/`
+2. Run `buf lint` to ensure compliance
+3. Run `buf breaking --against '.git#branch=main'` to check for breaking changes
+4. Generate code with `buf generate`
+5. Implement any new services in `lib/
 
 ## 📜 License
 
