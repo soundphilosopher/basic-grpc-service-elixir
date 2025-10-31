@@ -36,9 +36,9 @@ Ever wanted to build a gRPC service in Elixir? Ever wanted to chat with ELIZA? E
 ### Prerequisites
 
 - Elixir ~> 1.17
-- Protocol Buffer compiler (`protoc`) [](https://github.com/protocolbuffers/protobuf#protocol-compiler-installation)
-- `protoc` plugin for Elixir (`protoc-gen-elixir`) [](https://github.com/elixir-protobuf/protobuf)
-- `mkcert` for local TLS certificates [](https://github.com/FiloSottile/mkcert)
+- Protocol Buffer compiler (`protoc`) [](https://github.com/protocolbuffers/protobuf#protocol-compiler-installation)
+- `protoc` plugin for Elixir (`protoc-gen-elixir`) [](https://github.com/elixir-protobuf/protobuf)
+- `mkcert` for local TLS certificates [](https://github.com/FiloSottile/mkcert)
 - Your favorite gRPC client (grpcurl, Postman, etc.)
 
 ### Installation
