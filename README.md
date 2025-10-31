@@ -243,6 +243,7 @@ grpcurl 127.0.0.1:9443 describe basic.service.v1.HelloRequest
 ## 🏗️ Architecture
 
 ```mermaid
+%%{init: {'theme':'neutral'}}%%
 graph TB
     Client[/"👤 gRPC Client<br/>(grpcurl, Postman, etc.)"/]
 
@@ -276,20 +277,6 @@ graph TB
 
     ProtoFiles -->|"buf generate"| BufCLI
     BufCLI -->|"Generated Code"| Protobuf
-
-    style Server fill:#f9f9ff,stroke:#333,stroke-width:2px
-    style Endpoint fill:#ffe6e6,stroke:#ff4444,stroke-width:2px
-    style Logger fill:#fff4e6,stroke:#ff9944,stroke-width:1px
-    style BasicService fill:#e6f3ff,stroke:#4488ff,stroke-width:1px
-    style HealthService fill:#e6ffe6,stroke:#44ff44,stroke-width:1px
-    style ReflectionV1 fill:#f0e6ff,stroke:#9944ff,stroke-width:1px
-    style ReflectionV1Alpha fill:#f0e6ff,stroke:#9944ff,stroke-width:1px
-    style Protobuf fill:#ffe6f0,stroke:#ff44aa,stroke-width:1px
-    style BusinessLogic fill:#e6e6ff,stroke:#4444ff,stroke-width:1px
-    style Eliza fill:#ffffe6,stroke:#aaaa44,stroke-width:1px
-    style Utils fill:#e6ffff,stroke:#44aaaa,stroke-width:1px
-    style ProtoFiles fill:#f0f0f0,stroke:#666,stroke-width:1px,stroke-dasharray: 5 5
-    style BufCLI fill:#f0f0f0,stroke:#666,stroke-width:1px,stroke-dasharray: 5 5
 ```
 
 ## 📁 Project Structure
