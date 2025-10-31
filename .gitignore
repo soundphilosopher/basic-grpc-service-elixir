@@ -24,3 +24,5 @@ basic_grpc_service-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+
+# local certificates
