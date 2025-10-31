@@ -3,41 +3,35 @@ defmodule BasicGrpcService.Server do
 
   use GRPC.Server, service: Basic.V1.BasicService.Service
 
-  alias Eliza
-  alias GRPC.Stream
+  require Logger
+
+  # alias Basic.Service.V1.BackgroundResponse
+  alias Basic.Service.V1.BackgroundResponse
+  alias Basic.Service.V1.BackgroundResponseEvent
+  alias BasicGrpcService.Utils
 
   alias Basic.Service.V1.{
     HelloRequest,
     HelloResponse,
     HelloResponseEvent,
     TalkRequest,
-    TalkResponse
+    TalkResponse,
+    BackgroundRequest
   }
 
-  alias Io.Cloudevents.V1.CloudEvent
-
   @spec hello(HelloRequest.t(), GRPC.Server.Stream.t()) :: any()
-  def hello(request, _stream) do
-    Stream.unary(request)
-    |> Stream.map(fn %HelloRequest{message: message} ->
-      greeting = "Hello, #{message}!"
+  def hello(request, stream) do
+    GRPC.Stream.unary(request)
+    |> GRPC.Stream.map(fn %HelloRequest{message: message} ->
+      payload = HelloResponseEvent.encode(%HelloResponseEvent{greeting: "Hello, #{message}!"})
 
-      response_event = %HelloResponseEvent{
-        greeting: greeting
-      }
-
-      event_data = HelloResponseEvent.encode(response_event)
-
-      cloud_event = %CloudEvent{
-        id: :crypto.strong_rand_bytes(16) |> Base.encode16(case: :lower),
-        spec_version: "1.0",
-        source: "/Hello",
-        type: "basic.service.v1.HelloResponseEvent",
-        data: {:binary_data, event_data}
+      any = %Google.Protobuf.Any{
+        type_url: "type.googleapis.com/basic.v1.BasicService.HelloResponseEvent",
+        value: payload
       }
 
       %HelloResponse{
-        cloud_event: cloud_event
+        cloud_event: Utils.create_cloudevent(any, stream)
       }
     end)
     |> GRPC.Stream.run()
@@ -45,15 +39,80 @@ defmodule BasicGrpcService.Server do
 
   @spec talk(Enumerable.t(), GRPC.Server.Stream.t()) :: any()
   def talk(request, stream) do
-    Stream.from(request)
-    |> Stream.map(fn %TalkRequest{message: message} ->
+    GRPC.Stream.from(request)
+    |> GRPC.Stream.map(fn %TalkRequest{message: message} ->
       {answer, _} = Eliza.talk(message)
       %TalkResponse{answer: answer}
     end)
-    |> Stream.run_with(stream)
+    |> GRPC.Stream.run_with(stream)
   end
 
-  @spec background(Enumerable.t(), GRPC.Server.Stream.t()) :: any()
-  def background(_request, _stream) do
+  @spec background(BackgroundRequest.t(), GRPC.Server.Stream.t()) :: any()
+  def background(request, stream) do
+    GRPC.Stream.unary(request)
+    |> GRPC.Stream.map(fn %BackgroundRequest{processes: processes} ->
+      # initialize state agent
+      {:ok, state_agent} = Utils.State.Management.start()
+      # create state unifier
+      hash = UUID.uuid4()
+
+      # Initialize state
+      Utils.State.Management.update_state(
+        state_agent,
+        hash,
+        %BackgroundResponseEvent{
+          state: :STATE_PROCESS,
+          started_at: Google.Protobuf.from_datetime(DateTime.utc_now()),
+          completed_at: nil,
+          responses: []
+        }
+      )
+
+      {state_agent, hash, processes}
+    end)
+    |> GRPC.Stream.map(fn {state_agent, hash, processes} ->
+      tasks =
+        1..processes
+        |> Enum.map(fn pid ->
+          Task.async(fn ->
+            Utils.dummy_service_call(pid)
+          end)
+        end)
+
+      {state_agent, hash, tasks}
+    end)
+    |> GRPC.Stream.map(fn {state_agent, hash, tasks} ->
+      initial_event = Utils.State.Management.get_state(state_agent, hash)
+
+      tasks
+      |> Enum.map(fn task ->
+        Task.await(task)
+      end)
+      |> Enum.map(fn response ->
+        event = %BackgroundResponseEvent{
+          state: :STATE_PROCESS,
+          started_at: initial_event.started_at,
+          completed_at: nil,
+          responses: [response]
+        }
+
+        Utils.State.Management.update_state(state_agent, hash, event)
+      end)
+
+      {state_agent, hash}
+    end)
+    |> GRPC.Stream.map(fn {state_agent, hash} ->
+      event = Utils.State.Management.get_state(state_agent, hash)
+      payload = BackgroundResponseEvent.encode(event)
+
+      any = %Google.Protobuf.Any{
+        type_url: "type.googleapis.com/basic.v1.BasicService.BackgroundResponseEvent",
+        value: payload
+      }
+
+      cloud_event = Utils.create_cloudevent(any, stream)
+      %BackgroundResponse{cloud_event: cloud_event}
+    end)
+    |> GRPC.Stream.run_with(stream)
   end
 end

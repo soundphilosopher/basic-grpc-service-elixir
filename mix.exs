@@ -23,9 +23,11 @@ defmodule BasicGrpcService.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:grpc, "~> 0.10"},
+      # {:grpc, "~> 0.10"},
+      {:grpc, github: "soundphilosopher/elixir-grpc", branch: "master", override: true},
       {:protobuf, "~> 0.14"},
-      {:grpc_reflection, "~> 0.2"}
+      {:grpc_reflection, "~> 0.2"},
+      {:uuid, "~> 1.1"}
     ]
   end
 end
