@@ -242,25 +242,54 @@ grpcurl 127.0.0.1:9443 describe basic.service.v1.HelloRequest
 
 ## 🏗️ Architecture
 
-```
-┌─────────────────────────────────────────┐
-│           gRPC Endpoint                 │
-│         (HTTPS Port: 9443)              │
-│       🔒 TLS/SSL Termination             │
-├─────────────────────────────────────────┤
-│      Interceptor: Logger                │
-├──────────┬────────┬────────┬────────────┤
-│  Basic   │ Health │ Refl.  │  Refl.     │
-│ Service  │ Server │  v1    │  v1alpha   │
-├──────────┴────────┴────────┴────────────┤
-│         Protocol Buffers                │
-│      (Generated from .proto)            │
-├─────────────────────────────────────────┤
-│        Business Logic                   │
-│    ┌─────────┐  ┌──────────┐            │
-│    │  ELIZA  │  │  Utils   │            │
-│    └─────────┘  └──────────┘            │
-└─────────────────────────────────────────┘
+```mermaid
+graph TB
+    Client[/"👤 gRPC Client<br/>(grpcurl, Postman, etc.)"/]
+
+    Client -->|"HTTPS/TLS<br/>Port: 9443"| Endpoint
+
+    subgraph Server["🖥️ Elixir gRPC Server"]
+        Endpoint["🔒 gRPC Endpoint<br/>TLS/SSL Termination"]
+
+        Endpoint --> Logger["📝 Interceptor: Logger"]
+
+        Logger --> Services{" "}
+
+        Services --> BasicService["📦 Basic Service<br/>• Hello<br/>• Talk<br/>• Background"]
+        Services --> HealthService["💚 Health Server<br/>• Check<br/>• List<br/>• Watch"]
+        Services --> ReflectionV1["🔍 Reflection v1<br/>Server Discovery"]
+        Services --> ReflectionV1Alpha["🔍 Reflection v1alpha<br/>Server Discovery"]
+
+        BasicService --> Protobuf["📋 Protocol Buffers<br/>(Generated via Buf CLI)"]
+        HealthService --> Protobuf
+        ReflectionV1 --> Protobuf
+        ReflectionV1Alpha --> Protobuf
+
+        Protobuf --> BusinessLogic["💼 Business Logic"]
+
+        BusinessLogic --> Eliza["🤖 ELIZA<br/>Chatbot Engine"]
+        BusinessLogic --> Utils["🛠️ Utils<br/>• CloudEvents<br/>• State Management<br/>• Helpers"]
+    end
+
+    ProtoFiles["📄 Proto Definitions<br/>priv/proto/"]
+    BufCLI["🛠️ Buf CLI"]
+
+    ProtoFiles -->|"buf generate"| BufCLI
+    BufCLI -->|"Generated Code"| Protobuf
+
+    style Server fill:#f9f9ff,stroke:#333,stroke-width:2px
+    style Endpoint fill:#ffe6e6,stroke:#ff4444,stroke-width:2px
+    style Logger fill:#fff4e6,stroke:#ff9944,stroke-width:1px
+    style BasicService fill:#e6f3ff,stroke:#4488ff,stroke-width:1px
+    style HealthService fill:#e6ffe6,stroke:#44ff44,stroke-width:1px
+    style ReflectionV1 fill:#f0e6ff,stroke:#9944ff,stroke-width:1px
+    style ReflectionV1Alpha fill:#f0e6ff,stroke:#9944ff,stroke-width:1px
+    style Protobuf fill:#ffe6f0,stroke:#ff44aa,stroke-width:1px
+    style BusinessLogic fill:#e6e6ff,stroke:#4444ff,stroke-width:1px
+    style Eliza fill:#ffffe6,stroke:#aaaa44,stroke-width:1px
+    style Utils fill:#e6ffff,stroke:#44aaaa,stroke-width:1px
+    style ProtoFiles fill:#f0f0f0,stroke:#666,stroke-width:1px,stroke-dasharray: 5 5
+    style BufCLI fill:#f0f0f0,stroke:#666,stroke-width:1px,stroke-dasharray: 5 5
 ```
 
 ## 📁 Project Structure
