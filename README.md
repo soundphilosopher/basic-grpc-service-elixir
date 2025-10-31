@@ -243,7 +243,7 @@ grpcurl 127.0.0.1:9443 describe basic.service.v1.HelloRequest
 ## 🏗️ Architecture
 
 ```mermaid
-%%{init: {'theme':'base'}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'darkMode': true}}}%%
 graph TB
     Client[/"👤 gRPC Client<br/>(grpcurl, Postman, etc.)"/]
 
